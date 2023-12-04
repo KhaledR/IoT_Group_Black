@@ -16,9 +16,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const nav = document.createElement('nav');
     nav.innerHTML = `
         <a class="nav-link" href="#" id="currentWeatherLink">Current Weather</a>
-        <a class="nav-link" href="#">Forecast</a>
-        <a class="nav-link" href="#">Historical Data</a>
-        <a class="nav-link" href="#">Settings</a>
+        <a class="nav-link" href="#" id="forecastLink">Forecast</a>
+        <a class="nav-link" href="#" id="historicalDataLink">Historical Data</a>
+        <a class="nav-link" href="# id="settingsLink">Settings</a>
         <a class="nav-link" href="#">Help</a>
     `;
     document.body.appendChild(nav);
@@ -42,9 +42,19 @@ document.addEventListener('DOMContentLoaded', function() {
     `;
     document.body.appendChild(footer);
 
-    // Add an event listener for the "Current Weather" link
+    
     const currentWeatherLink = document.getElementById('currentWeatherLink');
     currentWeatherLink.addEventListener('click', handleCurrentWeatherClick);
+	
+	const forecastLink = document.getElementById('forecastLink');
+    forecastLink.addEventListener('click', handleForecastClick);
+	
+	const historicalDataLink = document.getElementById('historicalDataLink');
+    historicalDataLink.addEventListener('click', handleHistoricalClick);
+	
+	const settingsLink = document.getElementById('settingsLink');
+    settingsLink.addEventListener('click', handleSettingsClick);
+
 
     // Set the body font size
     document.body.style.fontSize = '18px';
@@ -54,22 +64,14 @@ function handleCurrentWeatherClick(event) {
     event.preventDefault();
 
     // Your logic for handling the "Current Weather" link click goes here
-    // For example, you can update the main section content dynamically
     const main = document.querySelector('main');
     main.innerHTML = `
         <h1 style="text-align: center; font-size: 20px; font-weight: bold;">
             Current Weather Information
         </h1>
-        <div id="map" style="height: 300px; margin-bottom: 20px;"></div>
-        <canvas id="temperatureChart" style="max-width: 600px; margin: 0 auto;"></canvas>
+        <h2 style="text-align: center; font-size: 18px; margin-bottom: 20px;" id="currentDate"></h2>
+        <canvas id="weatherChart" style="max-width: 1080px; margin: 0 auto;"></canvas>
     `;
-
-    // Add Google Maps script dynamically
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap`;
-    script.defer = true;
-    script.async = true;
-    document.head.appendChild(script);
 
     // Add Chart.js script dynamically
     const chartScript = document.createElement('script');
@@ -78,17 +80,33 @@ function handleCurrentWeatherClick(event) {
     chartScript.async = true;
     chartScript.onload = function () {
         // Your Chart.js logic goes here
-        const ctx = document.getElementById('temperatureChart').getContext('2d');
+        const ctx = document.getElementById('weatherChart').getContext('2d');
+        const currentDateElement = document.getElementById('currentDate');
+        const now = new Date();
+        currentDateElement.textContent = `Date: ${now.toDateString()}`;
+	
+        const hours = Array.from({ length: 24 }, (_, i) => {
+            const formattedHour = (i % 12 || 12) + ':00';
+            return i < 12 ? formattedHour + ' AM' : formattedHour + ' PM';
+        });
         const data = {
-            labels: ['January', 'February', 'March', 'April', 'May'],
+            labels: hours,
             datasets: [{
                 label: 'Temperature (°C)',
-                data: [20, 22, 25, 28, 30],
+                data: [22, 24, 26, 28, 30, 32, 34, 32, 30, 28, 26, 24], // Replace with your actual temperature data
                 backgroundColor: 'rgba(255, 145, 77, 0.2)',
                 borderColor: 'rgba(255, 145, 77, 1)',
                 borderWidth: 1
+            }, {
+                label: 'Humidity',
+                data: [70, 63, 80, 28, 30, 32, 34, 32, 30, 28, 26, 24], // Replace with your actual temperature data
+                backgroundColor: 'rgba(40, 124, 40, 0.2)',
+                borderColor: 'rgba(40, 124, 40, 1)',
+                borderWidth: 1
             }]
         };
+
+		
         const options = {
             scales: {
                 y: {
@@ -96,7 +114,7 @@ function handleCurrentWeatherClick(event) {
                 }
             }
         };
-        const temperatureChart = new Chart(ctx, {
+        const weatherChart = new Chart(ctx, {
             type: 'line',
             data: data,
             options: options
@@ -105,18 +123,100 @@ function handleCurrentWeatherClick(event) {
     document.head.appendChild(chartScript);
 }
 
-// Function to initialize Google Map
-function initMap() {
-    const bulacanLocation = { lat: 14.7943, lng: 120.8790 };
-    const map = new google.maps.Map(document.getElementById('map'), {
-        center: bulacanLocation,
-        zoom: 10
-    });
-    const marker = new google.maps.Marker({
-        position: bulacanLocation,
-        map: map,
-        title: 'Bulacan, Philippines'
-    });
+function handleForecastClick(event) {
+    event.preventDefault();
+
+    // Your logic for handling the "Forecast" link click goes here
+    // For example, you can update the main section content dynamically
+    const main = document.querySelector('main');
+    main.innerHTML = `
+        <h1 style="text-align: center; font-size: 20px; font-weight: bold;">
+            Weather Forecast Information
+        </h1>
+        <div id="forecastContainer" style="max-width: 2000px; margin: 0 auto;"></div>
+    `;
+
+    // Simulated forecast data (replace this with real data from an API)
+    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const today = new Date();
+    const startDay = today.getDay(); // Get the current day of the week (0 for Sunday, 1 for Monday, etc.)
+
+    // Calculate the start date for the forecast (yesterday if today is Sunday, else today)
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() - (startDay === 0 ? 1 : 0));
+
+    // Create elements for each day in the forecast
+    const forecastContainer = document.getElementById('forecastContainer');
+    for (let i = 0; i < 7; i++) {
+        const currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + i);
+
+        const dayData = {
+            day: daysOfWeek[i],
+            temperature: 24, // Replace with actual temperature data
+            alert: 'No alerts' // Replace with actual alert data
+        };
+
+        const dayElement = document.createElement('div');
+        dayElement.innerHTML = `
+            <h3 style="text-align: center;">${dayData.day}</h3>
+            <p style="text-align: center;">Date: ${currentDate.toDateString()}</p>
+            <p style="text-align: center;">Temperature: ${dayData.temperature}°C</p>
+            <p style="text-align: center;">Alerts: ${dayData.alert}</p>
+        `;
+        forecastContainer.appendChild(dayElement);
 }
+}
+
+function handleHistoricalClick(event) {
+    event.preventDefault();
+    // Your logic for handling the "Historical Data" link click goes here
+    // For example, you can update the main section content dynamically
+    const main = document.querySelector('main');
+    main.innerHTML = `
+        <h1 style="text-align: center; font-size: 20px; font-weight: bold;">
+            Historical Weather Data
+        </h1>
+        <div id="historicalDataContainer" style="max-width: 2000px; margin: 0 auto;">
+            <!-- Your historical data content goes here -->
+        </div>
+    `;
+
+    // Simulated historical data (replace this with real data from an API)
+    const historicalData = [
+        { date: '2023-01-01', temperature: 22, humidity: 70 },
+        { date: '2023-01-02', temperature: 24, humidity: 63 },
+        { date: '2023-01-03', temperature: 26, humidity: 80 },
+        // Add more historical data as needed
+    ];
+
+     //Create elements for each historical entry
+    const historicalDataContainer = document.getElementById('historicalDataContainer');
+    historicalData.forEach(entry => {
+        const entryElement = document.createElement('div');
+        entryElement.innerHTML = `
+            <h3 style="text-align: center;">Date: ${entry.date}</h3>
+            <p style="text-align: center;">Temperature: ${entry.temperature}°C</p>
+            <p style="text-align: center;">Humidity: ${entry.humidity}%</p>
+        `;
+        historicalDataContainer.appendChild(entryElement);
+    });
+
+}
+function handleSettingsClick(event) {
+    event.preventDefault();
+	console.log("Handle Settings Click");
+    // Your logic for handling the "Settings" link click goes here
+    const main = document.querySelector('main');
+    main.innerHTML = `
+        <h1 style="text-align: center; font-size: 20px; font-weight: bold;">
+            Settings
+        </h1>
+        <p style="text-align: center;">Customize your dashboard settings here.</p>
+        <!-- Add more settings content as needed -->
+    `;
+    // Add additional logic for settings handling
+	}
+
 
 
